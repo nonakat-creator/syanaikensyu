@@ -1,0 +1,2091 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>研修スケジュール — 社内研修</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@400;500;600;700;800&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&family=Noto+Sans+JP:wght@300;400;500;700&display=swap" rel="stylesheet">
+
+<style>
+/* ============================================================
+   社内研修 — 研修スケジュールアプリ
+   モノトーン基調 + オレンジ差し色 / 和エディトリアル様式
+   ============================================================ */
+
+:root {
+  /* --- Monotone base --- */
+  --ink:        #181818;   /* 墨・本文 */
+  --ink-soft:   #2e2e2e;
+  --ink-mute:   #6c6c6c;
+  --ink-faint:  #9a9a9a;
+  --line:       #e4e2dd;   /* 罫線 */
+  --line-soft:  #efeeea;
+  --paper:      #ffffff;
+  --paper-2:    #f7f6f3;   /* 淡いオフホワイト */
+  --paper-3:    #efede8;
+  --paper-warm: #f3f1ec;
+
+  /* --- Orange accent --- */
+  --accent:      #e3590a;
+  --accent-deep: #bf4707;
+  --accent-soft: #fbe9dc;
+  --accent-tint: #fdf4ec;
+
+  /* --- Status --- */
+  --ok:    #e3590a;   /* 参加 = accent */
+  --no:    #9a9a9a;   /* 不参加 = mute grey */
+  --maybe: #b8893f;   /* 未定 = muted gold */
+
+  /* --- Type --- */
+  --mincho: "Shippori Mincho B1", "Yu Mincho", "Hiragino Mincho ProN", serif;
+  --gothic: "Noto Sans JP", "Hiragino Kaku Gothic ProN", system-ui, sans-serif;
+  --serif-en: "Cormorant Garamond", "EB Garamond", serif;
+
+  /* --- Scale --- */
+  --step--1: clamp(0.78rem, 0.76rem + 0.1vw, 0.85rem);
+  --step-0:  clamp(0.9rem, 0.88rem + 0.15vw, 1rem);
+  --step-1:  clamp(1.05rem, 1rem + 0.3vw, 1.2rem);
+  --step-2:  clamp(1.3rem, 1.15rem + 0.6vw, 1.6rem);
+  --step-3:  clamp(1.7rem, 1.4rem + 1.2vw, 2.4rem);
+  --step-4:  clamp(2.2rem, 1.7rem + 2.2vw, 3.4rem);
+
+  --nav-h: 64px;
+  --maxw: 1180px;
+  --radius: 3px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body {
+  background: var(--paper-2);
+  color: var(--ink);
+  font-family: var(--gothic);
+  font-weight: 400;
+  line-height: 1.7;
+  font-feature-settings: "palt";
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+body { min-height: 100vh; }
+img { display: block; max-width: 100%; }
+button { font-family: inherit; cursor: pointer; }
+input, select, textarea { font-family: inherit; }
+a { color: inherit; text-decoration: none; }
+
+/* ===== Shared type helpers ===== */
+.kicker {
+  font-family: var(--serif-en);
+  font-style: italic;
+  font-weight: 500;
+  color: var(--accent);
+  letter-spacing: 0.02em;
+}
+.label-en {
+  font-family: var(--serif-en);
+  font-size: 11px;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+  font-weight: 500;
+}
+.serif-num {
+  font-family: var(--serif-en);
+  font-style: italic;
+  font-weight: 500;
+}
+.mincho { font-family: var(--mincho); }
+
+/* ===== App shell ===== */
+.app { min-height: 100vh; display: flex; flex-direction: column; }
+
+/* ---- Top bar (desktop + mobile header) ---- */
+.topbar {
+  position: sticky; top: 0; z-index: 50;
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 24px;
+  height: var(--nav-h);
+  padding: 0 clamp(16px, 3vw, 40px);
+  background: rgba(255,255,255,0.92);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--line);
+}
+.brand { display: flex; align-items: baseline; gap: 12px; min-width: 0; }
+.brand-mark {
+  font-family: var(--serif-en);
+  font-style: italic;
+  font-size: 23px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--ink);
+  white-space: nowrap;
+}
+.brand-mark .dot { color: var(--accent); }
+.brand-sub {
+  font-family: var(--mincho);
+  font-size: 12px;
+  letter-spacing: 0.32em;
+  color: var(--ink-mute);
+  white-space: nowrap;
+}
+.brand-sub.hide-sm { }
+
+/* desktop nav */
+.nav-desktop { display: flex; gap: 4px; align-items: center; }
+.nav-link {
+  position: relative;
+  display: inline-flex; align-items: center; gap: 9px;
+  padding: 10px 16px; white-space: nowrap;
+  font-size: var(--step-0);
+  font-weight: 500;
+  color: var(--ink-mute);
+  letter-spacing: 0.04em;
+  border-radius: var(--radius);
+  transition: color .18s, background .18s;
+}
+.nav-link .nico { width: 17px; height: 17px; opacity: .7; }
+.nav-link:hover { color: var(--ink); background: var(--paper-2); }
+.nav-link.active { color: var(--ink); }
+.nav-link.active .nico { opacity: 1; color: var(--accent); }
+.nav-link.active::after {
+  content: ""; position: absolute; left: 16px; right: 16px; bottom: -1px; height: 2px;
+  background: var(--accent);
+}
+.nav-link .nlabel-en {
+  font-family: var(--serif-en); font-style: italic; font-size: 0.78em;
+  color: var(--ink-faint); margin-left: 2px;
+}
+
+.topbar-right { display: flex; align-items: center; gap: 14px; }
+.me-chip {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 7px 12px 7px 9px;
+  border: 1px solid var(--line);
+  border-radius: 100px;
+  font-size: var(--step--1);
+  color: var(--ink-soft);
+  background: var(--paper);
+  transition: border-color .18s;
+  white-space: nowrap;
+}
+.me-chip:hover { border-color: var(--ink-faint); }
+.me-avatar {
+  width: 22px; height: 22px; border-radius: 50%;
+  background: var(--ink); color: #fff;
+  display: grid; place-items: center;
+  font-size: 11px; font-weight: 700; font-family: var(--mincho);
+}
+.me-chip .me-empty { color: var(--ink-faint); }
+
+/* ---- Mobile bottom nav ---- */
+.nav-mobile {
+  display: none;
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 60;
+  background: rgba(255,255,255,0.96);
+  backdrop-filter: blur(12px);
+  border-top: 1px solid var(--line);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.nav-mobile-inner { display: grid; grid-template-columns: repeat(4, 1fr); }
+.mtab {
+  background: none; border: none;
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  padding: 9px 0 7px;
+  color: var(--ink-faint);
+  transition: color .15s;
+}
+.mtab .nico { width: 22px; height: 22px; }
+.mtab span { font-size: 10.5px; letter-spacing: 0.04em; font-weight: 500; }
+.mtab.active { color: var(--accent); }
+
+/* ===== Page frame ===== */
+.page { flex: 1; width: 100%; }
+.wrap { max-width: var(--maxw); margin: 0 auto; padding: clamp(22px, 4vw, 52px) clamp(16px, 3vw, 40px); }
+
+.page-head { margin-bottom: clamp(22px, 3vw, 36px); }
+.page-head .label-en { display: block; margin-bottom: 12px; }
+.page-head h1 {
+  font-family: var(--mincho);
+  font-weight: 700;
+  font-size: var(--step-4);
+  letter-spacing: 0.04em;
+  line-height: 1.2;
+  color: var(--ink);
+}
+.page-head h1 em {
+  font-family: var(--serif-en); font-style: italic; font-weight: 500;
+  color: var(--accent); letter-spacing: 0; font-size: 0.86em; margin-left: 6px;
+}
+.page-head .lead {
+  margin-top: 12px; color: var(--ink-mute); font-size: var(--step-0);
+  max-width: 60ch; line-height: 1.9;
+}
+
+/* ===== Toolbar (filters/search) ===== */
+.toolbar {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 12px;
+  margin-bottom: 22px;
+}
+.search {
+  position: relative; flex: 1 1 220px; min-width: 0;
+}
+.search input {
+  width: 100%; padding: 11px 14px 11px 38px;
+  border: 1px solid var(--line); border-radius: var(--radius);
+  background: var(--paper); color: var(--ink); font-size: var(--step-0);
+  transition: border-color .15s;
+}
+.search input:focus { outline: none; border-color: var(--accent); }
+.search .sico { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); width: 17px; height: 17px; color: var(--ink-faint); }
+
+.seg {
+  display: inline-flex; border: 1px solid var(--line); border-radius: var(--radius);
+  background: var(--paper); overflow: hidden;
+}
+.seg button {
+  background: none; border: none; padding: 10px 14px;
+  font-size: var(--step--1); color: var(--ink-mute); font-weight: 500;
+  letter-spacing: 0.03em; white-space: nowrap;
+  border-right: 1px solid var(--line); transition: background .15s, color .15s;
+}
+.seg button:last-child { border-right: none; }
+.seg button.active { background: var(--ink); color: #fff; }
+
+/* filter chips row */
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip {
+  padding: 7px 14px; border: 1px solid var(--line); border-radius: 100px;
+  background: var(--paper); color: var(--ink-mute); font-size: var(--step--1);
+  font-weight: 500; letter-spacing: 0.04em; transition: all .15s; white-space: nowrap;
+}
+.chip:hover { border-color: var(--ink-faint); color: var(--ink-soft); }
+.chip.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+/* ===== Tag / badge atoms ===== */
+.tag {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 3px 9px; border-radius: 2px; font-size: 11.5px; font-weight: 500;
+  letter-spacing: 0.06em; white-space: nowrap;
+}
+.tag-aud { background: var(--paper-3); color: var(--ink-soft); }
+.tag-line { border: 1px solid var(--line); color: var(--ink-mute); background: transparent; }
+
+.fmt {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 11.5px; font-weight: 500; letter-spacing: 0.05em; color: var(--ink-mute);
+}
+.fmt .nico { width: 13px; height: 13px; }
+.fmt.online { color: var(--accent-deep); }
+
+.pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 4px 11px; border-radius: 100px; font-size: 12px; font-weight: 700;
+  letter-spacing: 0.04em;
+}
+.pill .pdot { width: 7px; height: 7px; border-radius: 50%; }
+.pill-ok    { background: var(--accent-soft); color: var(--accent-deep); }
+.pill-ok .pdot { background: var(--accent); }
+.pill-no    { background: #efefee; color: #6c6c6c; }
+.pill-no .pdot { background: var(--no); }
+.pill-maybe { background: #f6eedd; color: #936a25; }
+.pill-maybe .pdot { background: var(--maybe); }
+
+/* ===== Training cards (list) ===== */
+.card-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: clamp(16px, 2vw, 22px);
+}
+.tcard {
+  position: relative; display: flex; flex-direction: column;
+  background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius);
+  overflow: hidden; transition: border-color .18s, box-shadow .18s, transform .18s;
+  text-align: left; padding: 0;
+}
+.tcard:hover { border-color: var(--ink-faint); box-shadow: 0 14px 30px -22px rgba(0,0,0,0.4); transform: translateY(-2px); }
+.tcard-top {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  padding: 14px 18px; border-bottom: 1px solid var(--line-soft);
+}
+.tcard-date { display: flex; align-items: baseline; gap: 8px; }
+.tcard-date .d-day { font-family: var(--serif-en); font-style: italic; font-weight: 600; font-size: 26px; line-height: 1; color: var(--ink); }
+.tcard-date .d-mon { font-family: var(--serif-en); font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-mute); }
+.tcard-date .d-dow { font-size: 11px; color: var(--ink-faint); margin-left: 2px; }
+.tcard-body { padding: 16px 18px 18px; flex: 1; display: flex; flex-direction: column; }
+.tcard-cat { margin-bottom: 9px; }
+.tcard-cat .label-en { font-size: 10px; letter-spacing: 0.22em; color: var(--accent); }
+.tcard h3 {
+  font-family: var(--mincho); font-weight: 600; font-size: var(--step-1);
+  line-height: 1.45; letter-spacing: 0.02em; color: var(--ink); margin-bottom: 10px;
+}
+.tcard-meta { display: flex; flex-direction: column; gap: 7px; margin-top: auto; padding-top: 12px; }
+.tcard-row { display: flex; align-items: center; gap: 8px; font-size: var(--step--1); color: var(--ink-mute); }
+.tcard-row .nico { width: 14px; height: 14px; color: var(--ink-faint); flex-shrink: 0; }
+.tcard-row strong { color: var(--ink-soft); font-weight: 500; white-space: nowrap; }
+.tcard-auds { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+.tcard-foot {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  padding: 12px 18px; border-top: 1px solid var(--line-soft); background: var(--paper-2);
+}
+.tcard-count { display: flex; align-items: baseline; gap: 6px; font-size: var(--step--1); color: var(--ink-mute); white-space: nowrap; }
+.tcard-count b { font-family: var(--serif-en); font-style: italic; font-size: 18px; color: var(--accent); font-weight: 600; }
+.tcard-go { font-size: var(--step--1); color: var(--ink-mute); display: inline-flex; align-items: center; gap: 5px; font-weight: 500; }
+.tcard:hover .tcard-go { color: var(--accent); }
+
+/* list (compact) view */
+.tlist { display: flex; flex-direction: column; border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; background: var(--paper); }
+.trow {
+  display: grid; grid-template-columns: 92px 1fr auto; gap: 18px; align-items: center;
+  padding: 16px 20px; border-bottom: 1px solid var(--line-soft); text-align: left;
+  background: none; border-left: none; border-right: none; border-top: none; width: 100%;
+  transition: background .15s;
+}
+.trow:last-child { border-bottom: none; }
+.trow:hover { background: var(--paper-2); }
+.trow-date { text-align: center; }
+.trow-date .d-day { font-family: var(--serif-en); font-style: italic; font-weight: 600; font-size: 22px; line-height: 1; color: var(--ink); }
+.trow-date .d-mon { display: block; font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink-mute); margin-top: 2px; }
+.trow-main { min-width: 0; }
+.trow-main .label-en { font-size: 9.5px; letter-spacing: 0.2em; color: var(--accent); }
+.trow-main h3 { font-family: var(--mincho); font-weight: 600; font-size: var(--step-1); letter-spacing: 0.02em; margin: 3px 0 6px; }
+.trow-sub { display: flex; flex-wrap: wrap; gap: 14px; font-size: var(--step--1); color: var(--ink-mute); }
+.trow-sub span { display: inline-flex; align-items: center; gap: 5px; }
+.trow-sub .nico { width: 13px; height: 13px; color: var(--ink-faint); }
+.trow-aside { display: flex; flex-direction: column; align-items: flex-end; gap: 7px; }
+
+/* ===== Section divider ===== */
+.divider {
+  display: flex; align-items: center; gap: 16px; margin: clamp(28px,4vw,44px) 0 18px;
+}
+.divider .dnum { font-family: var(--serif-en); font-style: italic; color: var(--accent); font-size: var(--step-1); }
+.divider h2 { font-family: var(--mincho); font-weight: 600; font-size: var(--step-2); letter-spacing: 0.04em; white-space: nowrap; }
+.divider .dline { flex: 1; height: 1px; background: var(--line); }
+.divider .dcount { font-size: var(--step--1); color: var(--ink-faint); white-space: nowrap; }
+
+.empty { padding: 60px 20px; text-align: center; color: var(--ink-faint); }
+.empty .nico { width: 40px; height: 40px; margin: 0 auto 14px; opacity: .4; }
+.empty p { font-size: var(--step-0); }
+
+/* ===== Calendar ===== */
+.cal-head { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-bottom: 18px; }
+.cal-title { font-family: var(--mincho); font-weight: 700; font-size: var(--step-2); letter-spacing: 0.04em; display: flex; align-items: baseline; gap: 12px; }
+.cal-title .y { font-family: var(--serif-en); font-style: italic; color: var(--ink-mute); font-size: 0.7em; font-weight: 500; }
+.cal-nav { display: flex; gap: 8px; }
+.cal-nav button, .cal-today {
+  display: inline-flex; align-items: center; gap: 6px; justify-content: center;
+  width: 38px; height: 38px; border: 1px solid var(--line); border-radius: var(--radius);
+  background: var(--paper); color: var(--ink-soft); transition: all .15s;
+}
+.cal-today { width: auto; padding: 0 14px; font-size: var(--step--1); font-weight: 500; }
+.cal-nav button:hover, .cal-today:hover { border-color: var(--accent); color: var(--accent); }
+.cal-nav .nico { width: 16px; height: 16px; }
+
+.cal-grid { background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
+.cal-dows { display: grid; grid-template-columns: repeat(7, 1fr); border-bottom: 1px solid var(--line); }
+.cal-dows div { padding: 10px 6px; text-align: center; font-size: 11px; letter-spacing: 0.1em; color: var(--ink-mute); font-weight: 500; }
+.cal-dows div.sun { color: var(--accent-deep); }
+.cal-dows div.sat { color: #5a7a9a; }
+.cal-cells { display: grid; grid-template-columns: repeat(7, 1fr); }
+.cal-cell {
+  min-height: 110px; padding: 7px 7px 8px; border-right: 1px solid var(--line-soft); border-bottom: 1px solid var(--line-soft);
+  display: flex; flex-direction: column; gap: 4px; background: var(--paper); position: relative; text-align: left;
+  transition: background .12s;
+}
+.cal-cell:nth-child(7n) { border-right: none; }
+.cal-cell.other { background: var(--paper-2); }
+.cal-cell.other .cnum { color: var(--ink-faint); opacity: .5; }
+.cal-cell.has:hover { background: var(--accent-tint); cursor: pointer; }
+.cnum { font-family: var(--serif-en); font-style: italic; font-size: 15px; font-weight: 600; color: var(--ink-soft); line-height: 1; align-self: flex-start; }
+.cal-cell.today .cnum {
+  background: var(--accent); color: #fff; width: 24px; height: 24px; border-radius: 50%;
+  display: grid; place-items: center; font-size: 13px;
+}
+.cal-cell.sun .cnum { color: var(--accent-deep); }
+.cevent {
+  display: block; width: 100%; text-align: left;
+  font-size: 11px; line-height: 1.3; padding: 3px 6px; border-radius: 2px;
+  background: var(--paper-3); color: var(--ink-soft); border-left: 2px solid var(--ink-faint);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500;
+}
+.cevent.acc { background: var(--accent-soft); color: var(--accent-deep); border-left-color: var(--accent); }
+.cevent-more { font-size: 10.5px; color: var(--ink-mute); padding-left: 6px; }
+
+/* day list under calendar (mobile-friendly) */
+.cal-daylist { margin-top: 20px; }
+
+/* ===== Detail ===== */
+.detail-back {
+  display: inline-flex; align-items: center; gap: 7px; color: var(--ink-mute); white-space: nowrap;
+  font-size: var(--step--1); font-weight: 500; margin-bottom: 18px; background: none; border: none; padding: 0;
+}
+.detail-back:hover { color: var(--accent); }
+.detail-back .nico { width: 15px; height: 15px; }
+
+.detail-grid { display: grid; grid-template-columns: 1.6fr 1fr; gap: clamp(20px, 3vw, 44px); align-items: start; }
+
+.detail-hero { }
+.detail-cat { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
+.detail-cat .label-en { color: var(--accent); white-space: nowrap; }
+.detail-hero h1 {
+  font-family: var(--mincho); font-weight: 700; font-size: var(--step-4);
+  line-height: 1.3; letter-spacing: 0.03em; margin-bottom: 8px;
+}
+.detail-hero .title-en { font-family: var(--serif-en); font-style: italic; font-size: var(--step-1); color: var(--ink-mute); margin-bottom: 24px; }
+
+.detail-facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px,1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; margin-bottom: 28px; }
+.fact { background: var(--paper); padding: 15px 16px; }
+.fact .fk { font-family: var(--serif-en); font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--ink-faint); margin-bottom: 6px; display: flex; align-items: center; gap: 6px; }
+.fact .fk .nico { width: 13px; height: 13px; }
+.fact .fv { font-size: var(--step-0); color: var(--ink); font-weight: 500; }
+.fact .fv .big { font-family: var(--serif-en); font-style: italic; font-size: 20px; color: var(--ink); font-weight: 600; }
+.fact .fv small { color: var(--ink-mute); font-weight: 400; }
+
+.detail-sec { margin-bottom: 28px; }
+.detail-sec h2 { font-family: var(--mincho); font-weight: 600; font-size: var(--step-1); letter-spacing: 0.05em; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--line); display: flex; align-items: center; gap: 10px; }
+.detail-sec h2 .label-en { font-size: 10px; }
+.detail-desc { font-size: var(--step-0); line-height: 2; color: var(--ink-soft); white-space: pre-line; }
+
+.detail-auds { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.instructor { display: flex; align-items: center; gap: 14px; }
+.instructor .iav { width: 52px; height: 52px; border-radius: 50%; background: var(--ink); color: #fff; display: grid; place-items: center; font-family: var(--mincho); font-weight: 600; font-size: 20px; flex-shrink: 0; }
+.instructor .iname { font-family: var(--mincho); font-weight: 600; font-size: var(--step-1); }
+.instructor .ititle { font-size: var(--step--1); color: var(--ink-mute); }
+
+/* detail aside / participation */
+.aside-card { background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius); position: sticky; top: calc(var(--nav-h) + 18px); overflow: hidden; }
+.aside-head { padding: 18px 20px; border-bottom: 1px solid var(--line); background: var(--ink); color: #fff; }
+.aside-head .label-en { color: rgba(255,255,255,0.6); }
+.aside-count { display: flex; align-items: baseline; gap: 8px; margin-top: 6px; flex-wrap: wrap; }
+.aside-count b { font-family: var(--serif-en); font-style: italic; font-size: 40px; color: #fff; font-weight: 600; line-height: 1; }
+.aside-count span { color: rgba(255,255,255,0.7); font-size: var(--step--1); white-space: nowrap; }
+.aside-bars { padding: 16px 20px; display: flex; flex-direction: column; gap: 10px; border-bottom: 1px solid var(--line); }
+.minibar { }
+.minibar-top { display: flex; justify-content: space-between; align-items: baseline; font-size: var(--step--1); margin-bottom: 5px; }
+.minibar-top .mb-n { font-family: var(--serif-en); font-style: italic; font-weight: 600; color: var(--ink); }
+.minibar-track { height: 7px; border-radius: 100px; background: var(--paper-3); overflow: hidden; }
+.minibar-fill { height: 100%; border-radius: 100px; }
+
+.aside-cta { padding: 18px 20px; }
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 13px 22px; border-radius: var(--radius); font-size: var(--step-0); font-weight: 700;
+  letter-spacing: 0.04em; border: 1px solid transparent; transition: all .16s; width: 100%;
+}
+.btn .nico { width: 16px; height: 16px; }
+.btn-primary { background: var(--accent); color: #fff; }
+.btn-primary:hover { background: var(--accent-deep); }
+.btn-ghost { background: var(--paper); color: var(--ink); border-color: var(--line); }
+.btn-ghost:hover { border-color: var(--ink); }
+.btn-dark { background: var(--ink); color: #fff; }
+.btn-dark:hover { background: var(--ink-soft); }
+.btn-sm { padding: 9px 16px; font-size: var(--step--1); width: auto; }
+.btn-danger { background: var(--paper); color: var(--accent-deep); border-color: var(--accent-soft); }
+.btn-danger:hover { background: var(--accent-tint); border-color: var(--accent); }
+
+/* attendee mini list */
+.attendees { display: flex; flex-direction: column; }
+.att-row { display: grid; grid-template-columns: auto 1fr auto; gap: 11px; align-items: center; padding: 12px 20px; border-bottom: 1px solid var(--line-soft); }
+.att-row:last-child { border-bottom: none; }
+.att-av { width: 32px; height: 32px; border-radius: 50%; background: var(--paper-3); color: var(--ink-soft); display: grid; place-items: center; font-size: 13px; font-weight: 600; font-family: var(--mincho); }
+.att-info .an { font-size: var(--step-0); font-weight: 500; color: var(--ink); }
+.att-info .ad { font-size: var(--step--1); color: var(--ink-mute); }
+
+/* ===== Forms / modal ===== */
+.modal-scrim { position: fixed; inset: 0; z-index: 100; background: rgba(24,24,24,0.5); backdrop-filter: blur(3px); display: flex; align-items: flex-start; justify-content: center; padding: clamp(16px,4vh,60px) 16px; overflow-y: auto; }
+.modal {
+  width: 100%; max-width: 560px; background: var(--paper); border-radius: var(--radius);
+  box-shadow: 0 40px 80px -30px rgba(0,0,0,0.5); overflow: hidden; animation: pop .22s ease;
+}
+.modal.wide { max-width: 760px; }
+@keyframes pop { from { opacity: 0; transform: translateY(10px) scale(.99); } to { opacity: 1; transform: none; } }
+.modal-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; padding: 22px 24px 18px; border-bottom: 1px solid var(--line); }
+.modal-head .label-en { display: block; color: var(--accent); margin-bottom: 6px; }
+.modal-head h2 { font-family: var(--mincho); font-weight: 700; font-size: var(--step-2); letter-spacing: 0.03em; line-height: 1.4; }
+.modal-x { background: none; border: none; width: 34px; height: 34px; border-radius: var(--radius); color: var(--ink-mute); display: grid; place-items: center; flex-shrink: 0; transition: background .15s; }
+.modal-x:hover { background: var(--paper-2); color: var(--ink); }
+.modal-x .nico { width: 20px; height: 20px; }
+.modal-body { padding: 22px 24px; }
+.modal-foot { display: flex; gap: 12px; justify-content: flex-end; padding: 16px 24px; border-top: 1px solid var(--line); background: var(--paper-2); }
+
+.field { margin-bottom: 18px; }
+.field:last-child { margin-bottom: 0; }
+.field > label { display: block; font-size: var(--step--1); font-weight: 700; color: var(--ink-soft); letter-spacing: 0.04em; margin-bottom: 8px; }
+.field > label .req { color: var(--accent); margin-left: 3px; }
+.field > label .hint { font-weight: 400; color: var(--ink-faint); margin-left: 8px; }
+.input, .field input[type=text], .field input[type=date], .field input[type=time], .field input[type=number], .field select, .field textarea {
+  width: 100%; padding: 11px 13px; border: 1px solid var(--line); border-radius: var(--radius);
+  background: var(--paper); color: var(--ink); font-size: var(--step-0); transition: border-color .15s;
+}
+.field input:focus, .field select:focus, .field textarea:focus { outline: none; border-color: var(--accent); }
+.field textarea { resize: vertical; min-height: 76px; line-height: 1.7; }
+.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.field-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+
+/* choice buttons (radio-style) */
+.choice { display: flex; gap: 8px; flex-wrap: wrap; }
+.choice button {
+  flex: 1 1 0; min-width: 84px; padding: 11px 10px; border: 1px solid var(--line); border-radius: var(--radius);
+  background: var(--paper); color: var(--ink-mute); font-size: var(--step--1); font-weight: 600; letter-spacing: 0.04em;
+  transition: all .15s; display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+}
+.choice button .pdot { width: 8px; height: 8px; border-radius: 50%; background: var(--ink-faint); }
+.choice button:hover { border-color: var(--ink-faint); }
+.choice button.on { border-color: var(--accent); background: var(--accent-tint); color: var(--accent-deep); }
+.choice button.on .pdot { background: var(--accent); }
+
+/* audience multi-select */
+.aud-pick { display: flex; flex-wrap: wrap; gap: 8px; }
+.aud-pick button {
+  padding: 8px 13px; border: 1px solid var(--line); border-radius: 100px; background: var(--paper);
+  color: var(--ink-mute); font-size: var(--step--1); font-weight: 500; transition: all .15s;
+}
+.aud-pick button.on { background: var(--ink); border-color: var(--ink); color: #fff; }
+
+/* ===== Stats ===== */
+.stat-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; margin-bottom: 30px; }
+.stat-card { background: var(--paper); padding: 20px 22px; }
+.stat-card .sk { font-family: var(--serif-en); font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--ink-faint); margin-bottom: 10px; }
+.stat-card .sv { font-family: var(--serif-en); font-style: italic; font-size: 42px; line-height: 1; font-weight: 600; color: var(--ink); }
+.stat-card .sv.acc { color: var(--accent); }
+.stat-card .su { font-size: var(--step--1); color: var(--ink-mute); margin-top: 6px; }
+
+.stat-table { background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
+.stat-trow { display: grid; grid-template-columns: 1fr auto; gap: 16px; align-items: center; padding: 16px 20px; border-bottom: 1px solid var(--line-soft); }
+.stat-trow:last-child { border-bottom: none; }
+.stat-trow:hover { background: var(--paper-2); }
+.stat-tinfo { min-width: 0; }
+.stat-tinfo h3 { font-family: var(--mincho); font-weight: 600; font-size: var(--step-0); letter-spacing: 0.02em; margin-bottom: 4px; }
+.stat-tinfo .stm { font-size: var(--step--1); color: var(--ink-mute); display: flex; gap: 12px; flex-wrap: wrap; }
+.stat-tbar { display: flex; align-items: center; gap: 14px; }
+.stackbar { width: clamp(120px, 22vw, 260px); height: 12px; border-radius: 100px; overflow: hidden; display: flex; background: var(--paper-3); }
+.stackbar span { height: 100%; display: block; }
+.sb-ok { background: var(--accent); }
+.sb-maybe { background: var(--maybe); }
+.sb-no { background: var(--no); }
+.stat-tnum { font-family: var(--serif-en); font-style: italic; font-weight: 600; font-size: 22px; color: var(--ink); min-width: 40px; text-align: right; }
+
+.legend { display: flex; gap: 18px; flex-wrap: wrap; margin: 14px 2px 0; font-size: var(--step--1); color: var(--ink-mute); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.legend i { width: 11px; height: 11px; border-radius: 2px; display: inline-block; }
+
+/* dept breakdown */
+.dept-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px,1fr)); gap: 14px; }
+.dept-card { background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px 18px; }
+.dept-card h4 { font-family: var(--mincho); font-weight: 600; font-size: var(--step-0); margin-bottom: 10px; display: flex; justify-content: space-between; align-items: baseline; }
+.dept-card h4 b { font-family: var(--serif-en); font-style: italic; color: var(--accent); font-size: 20px; }
+.dept-bar { height: 8px; border-radius: 100px; background: var(--paper-3); overflow: hidden; }
+.dept-bar span { display: block; height: 100%; background: var(--ink); }
+
+/* ===== Admin ===== */
+.gate { max-width: 420px; margin: clamp(40px,10vh,100px) auto; background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius); padding: clamp(28px,4vw,40px); text-align: center; }
+.gate .glock { width: 46px; height: 46px; margin: 0 auto 18px; color: var(--accent); }
+.gate h2 { font-family: var(--mincho); font-weight: 700; font-size: var(--step-2); margin-bottom: 8px; letter-spacing: 0.04em; }
+.gate p { color: var(--ink-mute); font-size: var(--step--1); margin-bottom: 22px; }
+.gate input { text-align: center; letter-spacing: 0.4em; font-size: var(--step-1); }
+.gate .gerr { color: var(--accent-deep); font-size: var(--step--1); margin-top: 12px; min-height: 18px; }
+
+.admin-bar { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-bottom: 22px; flex-wrap: wrap; }
+.admin-table { background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
+.admin-row { display: grid; grid-template-columns: 80px 1fr auto; gap: 16px; align-items: center; padding: 14px 18px; border-bottom: 1px solid var(--line-soft); }
+.admin-row:last-child { border-bottom: none; }
+.admin-row:hover { background: var(--paper-2); }
+.admin-date { text-align: center; }
+.admin-date .d-day { font-family: var(--serif-en); font-style: italic; font-weight: 600; font-size: 20px; color: var(--ink); }
+.admin-date .d-mon { display: block; font-size: 9px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink-mute); }
+.admin-info { min-width: 0; }
+.admin-info h3 { font-family: var(--mincho); font-weight: 600; font-size: var(--step-0); margin-bottom: 4px; }
+.admin-info .am { font-size: var(--step--1); color: var(--ink-mute); display: flex; gap: 12px; flex-wrap: wrap; }
+.admin-acts { display: flex; gap: 8px; }
+.icon-btn { width: 34px; height: 34px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--paper); color: var(--ink-mute); display: grid; place-items: center; transition: all .15s; }
+.icon-btn:hover { border-color: var(--ink); color: var(--ink); }
+.icon-btn.del:hover { border-color: var(--accent); color: var(--accent); }
+.icon-btn .nico { width: 16px; height: 16px; }
+
+/* sync indicator */
+.sync-dot {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 11px; font-weight: 500; letter-spacing: 0.03em;
+  padding: 5px 10px; border-radius: 100px;
+  border: 1px solid var(--line); background: var(--paper);
+  white-space: nowrap; color: var(--ink-mute);
+}
+.sync-dot .sdot {
+  width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;
+}
+.sync-dot.online  { border-color: #c8e6c9; background: #f1f8f1; color: #2e7d32; }
+.sync-dot.online  .sdot { background: #43a047; animation: pulse-g 2s infinite; }
+.sync-dot.error   { border-color: #ffcdd2; background: #fff5f5; color: var(--accent-deep); }
+.sync-dot.error   .sdot { background: var(--accent); }
+.sync-dot.connecting .sdot { background: var(--ink-faint); animation: blink .9s step-end infinite; }
+@keyframes pulse-g { 0%,100%{opacity:1} 50%{opacity:.4} }
+@keyframes blink   { 0%,100%{opacity:1} 50%{opacity:.2} }
+
+/* toast */
+.toast { position: fixed; left: 50%; bottom: 28px; transform: translateX(-50%); z-index: 200;
+  background: var(--ink); color: #fff; padding: 13px 22px; border-radius: 100px; font-size: var(--step--1);
+  font-weight: 500; box-shadow: 0 18px 40px -14px rgba(0,0,0,0.5); display: flex; align-items: center; gap: 9px;
+  animation: tin .25s ease; }
+.toast .nico { width: 17px; height: 17px; color: var(--accent); }
+@keyframes tin { from { opacity: 0; transform: translate(-50%, 14px); } to { opacity: 1; transform: translate(-50%, 0); } }
+
+/* footer note */
+.foot-note { text-align: center; padding: 30px 16px calc(30px + env(safe-area-inset-bottom)); color: var(--ink-faint); font-size: var(--step--1); }
+.foot-note .label-en { display: block; margin-bottom: 6px; }
+
+/* ===== Responsive ===== */
+@media (max-width: 920px) {
+  .detail-grid { grid-template-columns: 1fr; }
+  .aside-card { position: static; }
+}
+@media (max-width: 760px) {
+  .nav-desktop { display: none; }
+  .nav-mobile { display: block; }
+  .brand-sub.hide-sm { display: none; }
+  .app { padding-bottom: 64px; }
+  .topbar { height: 56px; }
+  :root { --nav-h: 56px; }
+  .card-grid { grid-template-columns: 1fr; }
+  .cal-cell { min-height: 64px; padding: 5px 4px; }
+  .cal-cell .cevent { font-size: 0; padding: 0; height: 6px; border-radius: 100px; border-left: none; margin-bottom: 2px; }
+  .cal-cell .cevent.acc { background: var(--accent); }
+  .cal-cell .cevent-more { display: none; }
+  .cal-dows div { font-size: 10px; padding: 8px 2px; }
+  .trow { grid-template-columns: 64px 1fr; }
+  .trow-aside { grid-column: 1 / -1; flex-direction: row; align-items: center; justify-content: space-between; padding-top: 6px; }
+  .field-row, .field-row-3 { grid-template-columns: 1fr; }
+  .stat-tbar { flex-direction: column; align-items: flex-end; gap: 6px; }
+  .stackbar { width: 140px; }
+}
+@media (max-width: 420px) {
+  .modal-foot { flex-direction: column-reverse; }
+  .modal-foot .btn { width: 100%; }
+}
+
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<!-- Firebase SDK (CDN / ES Modules) -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js";
+  import {
+    getFirestore,
+    collection,
+    doc,
+    addDoc,
+    setDoc,
+    deleteDoc,
+    onSnapshot,
+    query,
+    orderBy,
+    serverTimestamp,
+    writeBatch
+  } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
+
+  // ── Firebase 初期化 ─────────────────────────────────────────
+  var firebaseConfig = {
+    apiKey: "AIzaSyBXG1n3J9DYAQpO2sXOXSRXqaq7yZjI120",
+    authDomain: "syanaikensyu-abb31.firebaseapp.com",
+    projectId: "syanaikensyu-abb31",
+    storageBucket: "syanaikensyu-abb31.firebasestorage.app",
+    messagingSenderId: "709744669901",
+    appId: "1:709744669901:web:5dcdde03095eab86e2a584"
+  };
+  var fbApp = initializeApp(firebaseConfig);
+  var db    = getFirestore(fbApp);
+
+  // ── 定数 ───────────────────────────────────────────────────
+  var PASSCODE    = "1234";
+  var CATEGORIES  = ["業務品質", "倫理品質", "エンジニア", "ビジネス基礎", "DX/AX", "コンプライアンス", "AO校", "営業/接客"];
+  var BASES       = ["日吉BASE", "港北BASE", "十日市場BASE", "他BASE"];
+  var CATEGORY_EN = {
+    "業務品質": "Service Quality",
+    "倫理品質": "Ethics & Integrity",
+    "エンジニア": "Engineering",
+    "ビジネス基礎": "Business Basics",
+    "DX/AX": "DX / AX",
+    "コンプライアンス": "Compliance",
+    "AO校": "AO School",
+    "営業/接客": "Sales & CS"
+  };
+
+  function uid(prefix) {
+    return (prefix || "id") + "_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2, 7);
+  }
+
+  // ── pub/sub（Reactコンポーネント再描画用） ──────────────────
+  var subs = [];
+  function notify() { subs.forEach(function (fn) { try { fn(); } catch (e) {} }); }
+
+  // ── ローカルキャッシュ（onSnapshot が更新し続ける） ─────────
+  var _trainings  = [];
+  var _attendance = [];
+  var _syncStatus = "connecting"; // "connecting" | "online" | "error"
+
+  // ── Firestoreリアルタイム監視 ───────────────────────────────
+  // 研修データ
+  onSnapshot(
+    query(collection(db, "trainings"), orderBy("date", "asc")),
+    function (snap) {
+      _trainings = snap.docs.map(function (d) { return Object.assign({ id: d.id }, d.data()); });
+      _syncStatus = "online";
+      notify();
+    },
+    function (err) {
+      console.error("trainings snapshot error:", err);
+      _syncStatus = "error";
+      notify();
+    }
+  );
+
+  // 参加表明データ
+  onSnapshot(
+    query(collection(db, "attendance"), orderBy("createdAt", "desc")),
+    function (snap) {
+      _attendance = snap.docs.map(function (d) { return Object.assign({ id: d.id }, d.data()); });
+      notify();
+    },
+    function (err) {
+      console.error("attendance snapshot error:", err);
+    }
+  );
+
+  // ── 初回シードデータ投入（Firestoreが空のときのみ） ─────────
+  function seedIfEmpty() {
+    var unsubscribe = onSnapshot(collection(db, "trainings"), function (snap) {
+      unsubscribe();
+      if (snap.size > 0) return; // すでにデータあり
+
+      var trainings = [
+        {
+          id: uid("t"), category: "ビジネス基礎",
+          title: "新入社員ビジネスマナー研修",
+          titleEn: "Business Manners",
+          instructor: { name: "田中 美咲", title: "人事教育担当 / 外部講師" },
+          format: "対面", location: "日吉BASE 3F 大会議室", capacity: 30,
+          date: "2026-06-15", start: "10:00", end: "17:00",
+          desc: "社会人としての基本動作を一日で身につけます。\n挨拶・名刺交換・電話応対・ビジネスメール・来客応対までをロールプレイ中心に実践。配属前に必ず受講してください。"
+        },
+        {
+          id: uid("t"), category: "DX/AX",
+          title: "生成AI業務活用ハンズオン",
+          titleEn: "Generative AI Workshop",
+          instructor: { name: "佐藤 健", title: "DX推進室 室長" },
+          format: "オンライン", location: "オンライン（Teams）", capacity: 100,
+          date: "2026-06-19", start: "14:00", end: "16:00",
+          desc: "日々の業務に生成AIをどう取り入れるかを実演します。\n議事録作成・資料下書き・データ整理など、すぐ使える活用例を中心に。事前知識は不要です。"
+        },
+        {
+          id: uid("t"), category: "コンプライアンス",
+          title: "情報セキュリティ基礎研修",
+          titleEn: "Security Fundamentals",
+          instructor: { name: "鈴木 一郎", title: "情報システム課" },
+          format: "オンライン", location: "オンライン（オンデマンド）", capacity: 200,
+          date: "2026-06-24", start: "13:00", end: "14:30",
+          desc: "標的型メール・パスワード管理・情報持ち出しルールなど、全社員が守るべき基本を確認します。\n受講後に確認テストがあります。"
+        },
+        {
+          id: uid("t"), category: "業務品質",
+          title: "新任管理職マネジメント研修",
+          titleEn: "New Manager Program",
+          instructor: { name: "高橋 直子", title: "外部講師（組織開発コンサルタント）" },
+          format: "対面", location: "港北BASE 5F 研修室A", capacity: 20,
+          date: "2026-07-02", start: "09:30", end: "17:30",
+          desc: "チームを率いる立場として必要な考え方とスキルを学びます。\n目標設定・1on1・フィードバック・労務基礎をケーススタディで習得。今期昇格者は必須です。"
+        },
+        {
+          id: uid("t"), category: "営業/接客",
+          title: "店頭接客力向上トレーニング",
+          titleEn: "Customer Service",
+          instructor: { name: "渡辺 翔", title: "店舗運営 トレーナー" },
+          format: "対面", location: "十日市場BASE 研修センター", capacity: 24,
+          date: "2026-07-08", start: "10:00", end: "16:00",
+          desc: "お客様満足を高める接客の基本と応用を実演します。\nヒアリング・提案・クレーム対応をロールプレイで体得。"
+        },
+        {
+          id: uid("t"), category: "ビジネス基礎",
+          title: "ロジカルシンキング入門",
+          titleEn: "Logical Thinking",
+          instructor: { name: "中村 彩", title: "外部講師" },
+          format: "オンライン", location: "オンライン（Zoom）", capacity: 40,
+          date: "2026-07-15", start: "14:00", end: "17:00",
+          desc: "考えを構造化し、わかりやすく伝える技術を学びます。\nMECE・ピラミッド構造・課題設定の演習を通じて、提案書や報告の質を高めます。"
+        },
+        {
+          id: uid("t"), category: "倫理品質",
+          title: "メンタルヘルス・セルフケア研修",
+          titleEn: "Mental Health Care",
+          instructor: { name: "小林 由美", title: "産業カウンセラー" },
+          format: "オンライン", location: "オンライン（Teams）", capacity: 150,
+          date: "2026-07-22", start: "15:00", end: "16:30",
+          desc: "ストレスとの向き合い方とセルフケアの方法を学びます。\nラインケアの基礎にも触れ、働きやすい職場づくりを考えます。"
+        },
+        {
+          id: uid("t"), category: "エンジニア",
+          title: "データ分析の基礎（表計算）",
+          titleEn: "Data Analysis Basics",
+          instructor: { name: "佐藤 健", title: "DX推進室 室長" },
+          format: "対面", location: "日吉BASE 4F PCルーム", capacity: 18,
+          date: "2026-08-05", start: "13:00", end: "17:00",
+          desc: "業務データを集計・可視化する基礎技術を手を動かして学びます。\n関数・ピボット・グラフ作成を実データで演習します。"
+        }
+      ];
+
+      var names    = [
+        ["山田 太郎","日吉BASE"],["伊藤 花子","港北BASE"],["加藤 大輔","十日市場BASE"],
+        ["松本 さくら","他BASE"],["井上 涼","港北BASE"],["木村 拓也","日吉BASE"],
+        ["林 美穂","十日市場BASE"],["清水 健太","日吉BASE"],["森 あおい","港北BASE"],
+        ["池田 翼","他BASE"],["橋本 結衣","十日市場BASE"],["山口 蓮","日吉BASE"]
+      ];
+      var statuses = ["参加","参加","参加","未定","不参加","参加","未定","参加"];
+      var prefs    = ["対面","オンライン"];
+      var batch    = writeBatch(db);
+      var batchOps = 0;
+
+      // 研修データをバッチ書き込み
+      trainings.forEach(function (t) {
+        var ref = doc(db, "trainings", t.id);
+        var data = Object.assign({}, t);
+        delete data.id;
+        data.createdAt = serverTimestamp();
+        batch.set(ref, data);
+        batchOps++;
+      });
+
+      // 参加表明サンプルをバッチ書き込み
+      trainings.forEach(function (t, ti) {
+        var n = 3 + (ti % 5);
+        for (var i = 0; i < n; i++) {
+          var person  = names[(ti * 3 + i) % names.length];
+          var aid     = uid("a");
+          var ref     = doc(db, "attendance", aid);
+          batch.set(ref, {
+            trainingId: t.id,
+            name:       person[0],
+            dept:       person[1],
+            status:     statuses[(ti + i) % statuses.length],
+            pref:       t.format === "対面" ? prefs[i % 2] : "オンライン",
+            memo:       (i === 0 && ti % 3 === 0) ? "当日は少し遅れて参加します" : "",
+            createdAt:  Date.now() - (ti * 86400000) - i * 3600000
+          });
+          batchOps++;
+
+          // Firestoreバッチは500件制限 → 500件ごとにコミット
+          if (batchOps >= 490) {
+            batch.commit().catch(function (e) { console.error("batch error:", e); });
+            batchOps = 0;
+          }
+        }
+      });
+
+      if (batchOps > 0) {
+        batch.commit().catch(function (e) { console.error("batch error:", e); });
+      }
+    });
+  }
+
+  seedIfEmpty();
+
+  // ── Store オブジェクト（既存コードと同じ API） ──────────────
+  var Store = {
+    PASSCODE:    PASSCODE,
+    CATEGORIES:  CATEGORIES,
+    CATEGORY_EN: CATEGORY_EN,
+    BASES:       BASES,
+    STATUSES:    ["参加", "未定", "不参加"],
+
+    // 同期状態を取得（UI表示用）
+    getSyncStatus: function () { return _syncStatus; },
+
+    subscribe: function (fn) {
+      subs.push(fn);
+      return function () { subs = subs.filter(function (f) { return f !== fn; }); };
+    },
+
+    // ── 研修 ──────────────────────────────────────────────
+    getTrainings: function () {
+      return _trainings.slice().sort(function (a, b) {
+        return (a.date + (a.start || "")).localeCompare(b.date + (b.start || ""));
+      });
+    },
+    getTraining: function (id) {
+      return _trainings.filter(function (t) { return t.id === id; })[0] || null;
+    },
+    saveTraining: function (obj) {
+      var isNew = !obj.id;
+      if (isNew) { obj.id = uid("t"); }
+      var id   = obj.id;
+      var data = Object.assign({}, obj);
+      delete data.id;
+      if (isNew) { data.createdAt = serverTimestamp(); }
+      data.updatedAt = serverTimestamp();
+      setDoc(doc(db, "trainings", id), data, { merge: true })
+        .catch(function (e) { console.error("saveTraining error:", e); });
+      return id;
+    },
+    deleteTraining: function (id) {
+      deleteDoc(doc(db, "trainings", id))
+        .catch(function (e) { console.error("deleteTraining error:", e); });
+      // 関連する参加表明も削除
+      _attendance
+        .filter(function (a) { return a.trainingId === id; })
+        .forEach(function (a) {
+          deleteDoc(doc(db, "attendance", a.id))
+            .catch(function (e) { console.error("deleteAttendance error:", e); });
+        });
+    },
+
+    // ── 参加表明 ──────────────────────────────────────────
+    getAttendance: function (trainingId) {
+      var list = _attendance.slice();
+      if (trainingId) { list = list.filter(function (a) { return a.trainingId === trainingId; }); }
+      list.sort(function (a, b) { return (b.createdAt || 0) - (a.createdAt || 0); });
+      return list;
+    },
+    addAttendance: function (obj) {
+      obj.id        = uid("a");
+      obj.createdAt = Date.now();
+      var id   = obj.id;
+      var data = Object.assign({}, obj);
+      delete data.id;
+      setDoc(doc(db, "attendance", id), data)
+        .catch(function (e) { console.error("addAttendance error:", e); });
+      return id;
+    },
+    removeAttendance: function (id) {
+      deleteDoc(doc(db, "attendance", id))
+        .catch(function (e) { console.error("removeAttendance error:", e); });
+    },
+
+    // ── 集計 ─────────────────────────────────────────────
+    tally: function (trainingId) {
+      var list = this.getAttendance(trainingId);
+      var t    = { total: list.length, 参加: 0, 未定: 0, 不参加: 0, 対面: 0, オンライン: 0 };
+      list.forEach(function (a) {
+        if (t[a.status] != null) t[a.status]++;
+        if (t[a.pref]   != null) t[a.pref]++;
+      });
+      return t;
+    },
+
+    // ── プロフィール（localStorageのまま：個人設定なのでデバイスローカルでOK） ──
+    getMe: function () {
+      try { var r = localStorage.getItem("kenshu.me.v2"); return r ? JSON.parse(r) : { name: "", dept: "" }; } catch (e) { return { name: "", dept: "" }; }
+    },
+    setMe: function (me) {
+      try { localStorage.setItem("kenshu.me.v2", JSON.stringify(me)); } catch (e) {}
+      notify();
+    },
+
+    // ── 全リセット（Firestoreのデータも全削除 → 再シード） ──
+    resetAll: function () {
+      var batch = writeBatch(db);
+      _trainings.forEach(function (t) { batch.delete(doc(db, "trainings",  t.id)); });
+      _attendance.forEach(function (a) { batch.delete(doc(db, "attendance", a.id)); });
+      batch.commit().then(function () { seedIfEmpty(); })
+        .catch(function (e) { console.error("resetAll error:", e); });
+    }
+  };
+
+  window.Store = Store;
+</script>
+
+<script type="text/babel">
+/* ============================================================
+   components.jsx — アイコン / 共通アトム / ヘルパ
+   ============================================================ */
+
+/* ---- Inline SVG icons (line, currentColor) ---- */
+function Icon(props) {
+  var paths = {
+    list: <><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><circle cx="3.5" cy="6" r="1.4"/><circle cx="3.5" cy="12" r="1.4"/><circle cx="3.5" cy="18" r="1.4"/></>,
+    calendar: <><rect x="3" y="4.5" width="18" height="16" rx="1.5"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="8" y1="2.5" x2="8" y2="6.5"/><line x1="16" y1="2.5" x2="16" y2="6.5"/></>,
+    chart: <><line x1="4" y1="20" x2="20" y2="20"/><rect x="5.5" y="11" width="3.2" height="7"/><rect x="10.4" y="6.5" width="3.2" height="11.5"/><rect x="15.3" y="13.5" width="3.2" height="4.5"/></>,
+    gear: <><circle cx="12" cy="12" r="3.2"/><path d="M12 2.5v2.4M12 19.1v2.4M21.5 12h-2.4M4.9 12H2.5M18.7 5.3l-1.7 1.7M7 17l-1.7 1.7M18.7 18.7L17 17M7 7L5.3 5.3"/></>,
+    search: <><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.5" y2="16.5"/></>,
+    user: <><circle cx="12" cy="8" r="3.6"/><path d="M5 20c0-3.6 3.1-6 7-6s7 2.4 7 6"/></>,
+    users: <><circle cx="9" cy="8" r="3.2"/><path d="M3 19c0-3.2 2.7-5.4 6-5.4s6 2.2 6 5.4"/><path d="M16 5.2a3.2 3.2 0 0 1 0 6.1M18 13.6c2.4.4 4 2.3 4 5.4"/></>,
+    pin: <><path d="M12 21s7-6.1 7-11a7 7 0 1 0-14 0c0 4.9 7 11 7 11Z"/><circle cx="12" cy="10" r="2.6"/></>,
+    clock: <><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 1.8"/></>,
+    video: <><rect x="2.5" y="6" width="13" height="12" rx="1.6"/><path d="M15.5 10.5 21.5 7v10l-6-3.5z"/></>,
+    arrowR: <><line x1="4" y1="12" x2="19" y2="12"/><polyline points="13 6 19 12 13 18"/></>,
+    arrowL: <><line x1="20" y1="12" x2="5" y2="12"/><polyline points="11 6 5 12 11 18"/></>,
+    chevL: <polyline points="15 5 8 12 15 19"/>,
+    chevR: <polyline points="9 5 16 12 9 19"/>,
+    plus: <><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></>,
+    x: <><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></>,
+    edit: <><path d="M4 20h4l10.5-10.5a2 2 0 0 0 0-2.8l-1.2-1.2a2 2 0 0 0-2.8 0L4 16v4Z"/><line x1="13.5" y1="6.5" x2="17.5" y2="10.5"/></>,
+    trash: <><polyline points="4 7 20 7"/><path d="M9 7V4.5h6V7M6 7l1 13h10l1-13"/></>,
+    check: <polyline points="4 12.5 9.5 18 20 6.5"/>,
+    checkCircle: <><circle cx="12" cy="12" r="9"/><polyline points="8 12.2 11 15 16 9"/></>,
+    lock: <><rect x="5" y="10.5" width="14" height="10" rx="1.6"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/></>,
+    link: <><path d="M9.5 14.5 14.5 9.5M8 11l-2 2a3.5 3.5 0 0 0 5 5l2-2M16 13l2-2a3.5 3.5 0 0 0-5-5l-2 2"/></>,
+    cal2: <><rect x="3" y="4.5" width="18" height="16" rx="1.5"/><line x1="3" y1="9" x2="21" y2="9"/></>,
+    tag: <><path d="M3.5 12.5 11 5h7.5v7.5L11 20z"/><circle cx="15.5" cy="8.5" r="1.3"/></>,
+    download: <><path d="M12 4v11"/><polyline points="7 11 12 16 17 11"/><line x1="5" y1="20" x2="19" y2="20"/></>
+  };
+  var size = props.size || 24;
+  return (
+    <svg className={"nico " + (props.className || "")} width={size} height={size} viewBox="0 0 24 24"
+      fill="none" stroke="currentColor" strokeWidth={props.weight || 1.7} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      {paths[props.name]}
+    </svg>
+  );
+}
+
+/* ---- Sync status indicator ---- */
+function SyncIndicator() {
+  var Store = useStore();
+  var status = Store.getSyncStatus ? Store.getSyncStatus() : "connecting";
+  var label = { connecting: "接続中", online: "同期中", error: "エラー" }[status] || "接続中";
+  return (
+    <span className={"sync-dot " + status}>
+      <span className="sdot"></span>{label}
+    </span>
+  );
+}
+
+/* ---- Store subscription hook: re-render on any data change ---- */
+function useStore() {
+  var tick = React.useState(0);
+  React.useEffect(function () {
+    return window.Store.subscribe(function () { tick[1](function (n) { return n + 1; }); });
+  }, []);
+  return window.Store;
+}
+
+/* ---- Date helpers ---- */
+var DOW = ["日", "月", "火", "水", "木", "金", "土"];
+var MON_EN = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+function parseDate(s) {
+  // "2026-06-15" -> Date (local)
+  var p = (s || "").split("-");
+  return new Date(+p[0], (+p[1] || 1) - 1, +p[2] || 1);
+}
+function fmtDay(s) { return parseDate(s).getDate(); }
+function fmtMonEn(s) { return MON_EN[parseDate(s).getMonth()]; }
+function fmtDow(s) { return DOW[parseDate(s).getDay()]; }
+function fmtFull(s) {
+  var d = parseDate(s);
+  return d.getFullYear() + "年" + (d.getMonth() + 1) + "月" + d.getDate() + "日（" + DOW[d.getDay()] + "）";
+}
+function isPast(s, end) {
+  var d = parseDate(s);
+  var now = new Date();
+  // 当日は終了時刻まで未来扱い（簡易に翌0時で判定）
+  return d.setHours(23, 59) < now.getTime();
+}
+function todayISO() {
+  var d = new Date();
+  var m = String(d.getMonth() + 1).padStart(2, "0");
+  var day = String(d.getDate()).padStart(2, "0");
+  return d.getFullYear() + "-" + m + "-" + day;
+}
+
+/* ---- Atoms ---- */
+function FormatBadge(props) {
+  var online = props.format === "オンライン";
+  return (
+    <span className={"fmt" + (online ? " online" : "")}>
+      <Icon name={online ? "video" : "pin"} />
+      {props.format}
+    </span>
+  );
+}
+
+function StatusPill(props) {
+  var map = { "参加": "pill-ok", "未定": "pill-maybe", "不参加": "pill-no" };
+  return <span className={"pill " + (map[props.status] || "pill-no")}><span className="pdot"></span>{props.status}</span>;
+}
+
+function AudienceTags(props) {
+  return (
+    <div className="tcard-auds" style={props.style}>
+      {(props.audiences || []).map(function (a, i) {
+        return <span className="tag tag-aud" key={i}><Icon name="tag" size={11} weight={1.8} />{a}</span>;
+      })}
+    </div>
+  );
+}
+
+function Avatar(props) {
+  var ch = (props.name || "?").trim().charAt(0);
+  return <div className={props.cls || "att-av"} style={props.style}>{ch}</div>;
+}
+
+function Toast(props) {
+  React.useEffect(function () {
+    var t = setTimeout(props.onDone, 2400);
+    return function () { clearTimeout(t); };
+  }, []);
+  return <div className="toast"><Icon name="checkCircle" />{props.msg}</div>;
+}
+
+/* expose */
+Object.assign(window, {
+  Icon: Icon, FormatBadge: FormatBadge, StatusPill: StatusPill,
+  AudienceTags: AudienceTags, Avatar: Avatar, Toast: Toast, useStore: useStore,
+  DOW: DOW, MON_EN: MON_EN, parseDate: parseDate, fmtDay: fmtDay,
+  fmtMonEn: fmtMonEn, fmtDow: fmtDow, fmtFull: fmtFull, isPast: isPast, todayISO: todayISO
+});
+
+/* ============================================================
+   ListView.jsx — 研修一覧（カード / リスト切替・検索・絞り込み）
+   ============================================================ */
+function ListView(props) {
+  var Store = useStore();
+  var go = props.go;
+  var search = React.useState("");
+  var cat = React.useState("すべて");
+  var when = React.useState("upcoming"); // upcoming | all | past
+  var mode = React.useState(props.compact ? "list" : "card");
+
+  var all = Store.getTrainings();
+
+  var filtered = all.filter(function (t) {
+    if (when[0] === "upcoming" && isPast(t.date)) return false;
+    if (when[0] === "past" && !isPast(t.date)) return false;
+    if (cat[0] !== "すべて" && t.category !== cat[0]) return false;
+    if (search[0]) {
+      var q = search[0].toLowerCase();
+      var hay = (t.title + " " + t.titleEn + " " + t.instructor.name + " " + t.category).toLowerCase();
+      if (hay.indexOf(q) < 0) return false;
+    }
+    return true;
+  });
+
+  return (
+    <div className="page" data-screen-label="研修一覧">
+      <div className="wrap">
+        <div className="page-head">
+          <span className="label-en">Training Programs</span>
+          <h1>研修一覧<em>Catalogue</em></h1>
+          <p className="lead">受講できる社内研修の一覧です。内容や講師を確認し、各研修から参加を表明できます。</p>
+        </div>
+
+        <div className="toolbar">
+          <div className="search">
+            <Icon name="search" className="sico" />
+            <input type="text" placeholder="研修名・講師・キーワードで検索" value={search[0]}
+              onChange={function (e) { search[1](e.target.value); }} />
+          </div>
+          <div className="seg">
+            {[["upcoming", "今後"], ["all", "すべて"], ["past", "終了"]].map(function (o) {
+              return <button key={o[0]} className={when[0] === o[0] ? "active" : ""} onClick={function () { when[1](o[0]); }}>{o[1]}</button>;
+            })}
+          </div>
+          <div className="seg">
+            <button className={mode[0] === "card" ? "active" : ""} onClick={function () { mode[1]("card"); }} aria-label="カード表示"><Icon name="tag" size={15} /></button>
+            <button className={mode[0] === "list" ? "active" : ""} onClick={function () { mode[1]("list"); }} aria-label="リスト表示"><Icon name="list" size={15} /></button>
+          </div>
+        </div>
+
+        <div className="chips" style={{ marginBottom: 24 }}>
+          {["すべて"].concat(Store.CATEGORIES).map(function (c) {
+            return <button key={c} className={"chip" + (cat[0] === c ? " active" : "")} onClick={function () { cat[1](c); }}>{c}</button>;
+          })}
+        </div>
+
+        {filtered.length === 0 ? (
+          <div className="empty"><Icon name="search" /><p>条件に合う研修が見つかりませんでした。</p></div>
+        ) : mode[0] === "card" ? (
+          <div className="card-grid">
+            {filtered.map(function (t) { return <TrainingCard key={t.id} t={t} go={go} tally={Store.tally(t.id)} />; })}
+          </div>
+        ) : (
+          <div className="tlist">
+            {filtered.map(function (t) { return <TrainingRow key={t.id} t={t} go={go} tally={Store.tally(t.id)} />; })}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function TrainingCard(props) {
+  var t = props.t, tally = props.tally;
+  return (
+    <button className="tcard" onClick={function () { props.go("training/" + t.id); }}>
+      <div className="tcard-top">
+        <div className="tcard-date">
+          <span className="d-day">{fmtDay(t.date)}</span>
+          <span className="d-mon">{fmtMonEn(t.date)}</span>
+          <span className="d-dow">{fmtDow(t.date)}</span>
+        </div>
+        <FormatBadge format={t.format} />
+      </div>
+      <div className="tcard-body">
+        <div className="tcard-cat"><span className="label-en">{Store.CATEGORY_EN[t.category] || t.category}</span></div>
+        <h3>{t.title}</h3>
+        <div className="tcard-meta">
+          <div className="tcard-row"><Icon name="user" /><strong>{t.instructor.name}</strong></div>
+          <div className="tcard-row"><Icon name="clock" />{t.start}–{t.end}</div>
+          <div className="tcard-row"><Icon name="pin" />{t.location}</div>
+        </div>
+      </div>
+      <div className="tcard-foot">
+        <span className="tcard-count"><b>{tally.参加}</b> 名が参加予定</span>
+        <span className="tcard-go">詳細<Icon name="arrowR" size={14} /></span>
+      </div>
+    </button>
+  );
+}
+
+function TrainingRow(props) {
+  var t = props.t, tally = props.tally;
+  return (
+    <button className="trow" onClick={function () { props.go("training/" + t.id); }}>
+      <div className="trow-date">
+        <span className="d-day">{fmtDay(t.date)}</span>
+        <span className="d-mon">{fmtMonEn(t.date)} {fmtDow(t.date)}</span>
+      </div>
+      <div className="trow-main">
+        <span className="label-en">{Store.CATEGORY_EN[t.category] || t.category}</span>
+        <h3>{t.title}</h3>
+        <div className="trow-sub">
+          <span><Icon name="user" />{t.instructor.name}</span>
+          <span><Icon name="clock" />{t.start}–{t.end}</span>
+          <FormatBadge format={t.format} />
+          <span><Icon name="pin" />{t.location}</span>
+        </div>
+      </div>
+      <div className="trow-aside">
+        <span className="tcard-count"><b>{tally.参加}</b> 名参加予定</span>
+        <span className="tcard-go">詳細<Icon name="arrowR" size={14} /></span>
+      </div>
+    </button>
+  );
+}
+
+Object.assign(window, { ListView: ListView, TrainingCard: TrainingCard, TrainingRow: TrainingRow });
+
+/* ============================================================
+   CalendarView.jsx — 月カレンダー表示
+   ============================================================ */
+function CalendarView(props) {
+  var Store = useStore();
+  var today = new Date();
+  var view = React.useState({ y: today.getFullYear(), m: today.getMonth() }); // m: 0-11
+  var selected = React.useState(null); // ISO date string
+
+  var all = Store.getTrainings();
+  var byDate = {};
+  all.forEach(function (t) { (byDate[t.date] = byDate[t.date] || []).push(t); });
+
+  var y = view[0].y, m = view[0].m;
+  var first = new Date(y, m, 1);
+  var startDow = first.getDay();
+  var daysInMonth = new Date(y, m + 1, 0).getDate();
+  var tISO = todayISO();
+
+  // build 6x7 grid
+  var cells = [];
+  for (var i = 0; i < startDow; i++) {
+    var d = new Date(y, m, 1 - (startDow - i));
+    cells.push({ date: d, other: true });
+  }
+  for (var day = 1; day <= daysInMonth; day++) cells.push({ date: new Date(y, m, day), other: false });
+  while (cells.length % 7 !== 0) {
+    var last = cells[cells.length - 1].date;
+    cells.push({ date: new Date(last.getFullYear(), last.getMonth(), last.getDate() + 1), other: true });
+  }
+
+  function iso(d) {
+    return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+  }
+  function shift(delta) {
+    var nm = m + delta, ny = y;
+    if (nm < 0) { nm = 11; ny--; } else if (nm > 11) { nm = 0; ny++; }
+    view[1]({ y: ny, m: nm }); selected[1](null);
+  }
+  function goToday() { view[1]({ y: today.getFullYear(), m: today.getMonth() }); selected[1](tISO); }
+
+  var selList = selected[0] ? (byDate[selected[0]] || []).slice().sort(function (a, b) { return a.start.localeCompare(b.start); }) : null;
+
+  return (
+    <div className="page" data-screen-label="カレンダー">
+      <div className="wrap">
+        <div className="page-head">
+          <span className="label-en">Schedule</span>
+          <h1>スケジュール<em>Calendar</em></h1>
+          <p className="lead">研修の開催日を月単位で確認できます。日付をタップすると、その日の研修と参加状況を表示します。</p>
+        </div>
+
+        <div className="cal-head">
+          <div className="cal-title">{y}<span className="y"> · </span>{m + 1}月<span className="y">{MON_EN[m]}</span></div>
+          <div className="cal-nav">
+            <button onClick={function () { shift(-1); }} aria-label="前の月"><Icon name="chevL" size={16} /></button>
+            <button className="cal-today" onClick={goToday}>今日</button>
+            <button onClick={function () { shift(1); }} aria-label="次の月"><Icon name="chevR" size={16} /></button>
+          </div>
+        </div>
+
+        <div className="cal-grid">
+          <div className="cal-dows">
+            {DOW.map(function (d, i) { return <div key={d} className={i === 0 ? "sun" : i === 6 ? "sat" : ""}>{d}</div>; })}
+          </div>
+          <div className="cal-cells">
+            {cells.map(function (c, idx) {
+              var ci = iso(c.date);
+              var evs = byDate[ci] || [];
+              var dow = c.date.getDay();
+              var cls = "cal-cell";
+              if (c.other) cls += " other";
+              if (ci === tISO) cls += " today";
+              if (dow === 0) cls += " sun";
+              if (evs.length) cls += " has";
+              return (
+                <div key={idx} className={cls} onClick={evs.length ? function () { selected[1](ci); } : null}>
+                  <span className="cnum">{c.date.getDate()}</span>
+                  {evs.slice(0, 3).map(function (e) {
+                    return <span key={e.id} className={"cevent" + (e.format === "対面" ? " acc" : "")} title={e.title}>{e.title}</span>;
+                  })}
+                  {evs.length > 3 ? <span className="cevent-more">+{evs.length - 3}件</span> : null}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="legend">
+          <span><i style={{ background: "var(--accent)" }}></i>対面</span>
+          <span><i style={{ background: "var(--ink-faint)" }}></i>オンライン</span>
+          <span><i style={{ background: "var(--accent)", borderRadius: "50%" }}></i>本日</span>
+        </div>
+
+        {selList ? (
+          <div className="cal-daylist">
+            <div className="divider">
+              <span className="dnum serif-num">{fmtDay(selected[0])}</span>
+              <h2>{fmtFull(selected[0])}</h2>
+              <span className="dline"></span>
+              <span className="dcount">{selList.length}件</span>
+            </div>
+            <div className="tlist">
+              {selList.map(function (t) { return <TrainingRow key={t.id} t={t} go={props.go} tally={Store.tally(t.id)} />; })}
+            </div>
+          </div>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+Object.assign(window, { CalendarView: CalendarView });
+
+/* ============================================================
+   DetailView.jsx — 研修詳細 + 参加表明フォーム + 参加者一覧
+   ============================================================ */
+function DetailView(props) {
+  var Store = useStore();
+  var t = Store.getTraining(props.id);
+  var showForm = React.useState(false);
+
+  if (!t) {
+    return (
+      <div className="page"><div className="wrap">
+        <button className="detail-back" onClick={function () { props.go("list"); }}><Icon name="arrowL" />一覧へ戻る</button>
+        <div className="empty"><Icon name="search" /><p>この研修は見つかりませんでした。削除された可能性があります。</p></div>
+      </div></div>
+    );
+  }
+
+  var tally = Store.tally(t.id);
+  var attendees = Store.getAttendance(t.id);
+  var statusBars = [
+    { k: "参加", v: tally.参加, color: "var(--accent)" },
+    { k: "未定", v: tally.未定, color: "var(--maybe)" },
+    { k: "不参加", v: tally.不参加, color: "var(--no)" }
+  ];
+  var maxv = Math.max(1, tally.参加, tally.未定, tally.不参加);
+
+  function share() {
+    var url = location.origin + location.pathname + "#/training/" + t.id;
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(url).then(function () { props.toast("研修ページのURLをコピーしました"); });
+    } else { props.toast(url); }
+  }
+
+  return (
+    <div className="page" data-screen-label={"研修詳細：" + t.title}>
+      <div className="wrap">
+        <button className="detail-back" onClick={function () { props.go("list"); }}><Icon name="arrowL" />研修一覧へ戻る</button>
+
+        <div className="detail-grid">
+          {/* ---- main ---- */}
+          <div className="detail-main">
+            <div className="detail-hero">
+              <div className="detail-cat">
+                <span className="label-en">{Store.CATEGORY_EN[t.category] || ""}</span>
+                <span className="tag tag-line">{t.category}</span>
+                {isPast(t.date) ? <span className="tag tag-line">終了</span> : null}
+              </div>
+              <h1>{t.title}</h1>
+              <div className="title-en">{t.titleEn}</div>
+            </div>
+
+            <div className="detail-facts">
+              <div className="fact">
+                <div className="fk"><Icon name="cal2" />開催日</div>
+                <div className="fv"><span className="big">{fmtDay(t.date)}</span> {fmtMonEn(t.date)} <small>（{fmtDow(t.date)}）</small></div>
+              </div>
+              <div className="fact">
+                <div className="fk"><Icon name="clock" />時間</div>
+                <div className="fv">{t.start} – {t.end}</div>
+              </div>
+              <div className="fact">
+                <div className="fk"><Icon name={t.format === "オンライン" ? "video" : "pin"} />形式・場所</div>
+                <div className="fv">{t.format}<br /><small>{t.location}</small></div>
+              </div>
+              <div className="fact">
+                <div className="fk"><Icon name="users" />定員</div>
+                <div className="fv"><span className="big">{t.capacity}</span> <small>名</small></div>
+              </div>
+            </div>
+
+            <div className="detail-sec">
+              <h2><span className="label-en">About</span>研修内容</h2>
+              <div className="detail-desc">{t.desc}</div>
+            </div>
+
+            <div className="detail-sec">
+              <h2><span className="label-en">Instructor</span>講師</h2>
+              <div className="instructor">
+                <div className="iav">{(t.instructor.name || "?").charAt(0)}</div>
+                <div>
+                  <div className="iname">{t.instructor.name}</div>
+                  <div className="ititle">{t.instructor.title}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* ---- aside ---- */}
+          <div className="detail-aside">
+            <div className="aside-card">
+              <div className="aside-head">
+                <span className="label-en">Participation</span>
+                <div className="aside-count"><b>{tally.参加}</b><span>名が参加予定 / 定員 {t.capacity}名</span></div>
+              </div>
+              <div className="aside-bars">
+                {statusBars.map(function (b) {
+                  return (
+                    <div className="minibar" key={b.k}>
+                      <div className="minibar-top"><span>{b.k}</span><span className="mb-n">{b.v}</span></div>
+                      <div className="minibar-track"><div className="minibar-fill" style={{ width: (b.v / maxv * 100) + "%", background: b.color }}></div></div>
+                    </div>
+                  );
+                })}
+              </div>
+              <div className="aside-cta">
+                <button className="btn btn-primary" onClick={function () { showForm[1](true); }}><Icon name="check" />参加を表明する</button>
+                <button className="btn btn-ghost" style={{ marginTop: 10 }} onClick={share}><Icon name="link" />この研修のURLを共有</button>
+              </div>
+            </div>
+
+            <div className="aside-card" style={{ marginTop: 18 }}>
+              <div className="aside-head" style={{ background: "var(--paper-2)", color: "var(--ink)", borderBottom: "1px solid var(--line)" }}>
+                <span className="label-en" style={{ color: "var(--ink-mute)" }}>Attendees</span>
+                <div style={{ fontFamily: "var(--mincho)", fontWeight: 600, fontSize: "var(--step-0)", marginTop: 4 }}>参加表明した人（{attendees.length}）</div>
+              </div>
+              <div className="attendees">
+                {attendees.length === 0 ? (
+                  <div style={{ padding: "22px 20px", color: "var(--ink-faint)", fontSize: "var(--step--1)" }}>まだ表明がありません。最初の一人になりましょう。</div>
+                ) : attendees.slice(0, 12).map(function (a) {
+                  return (
+                    <div className="att-row" key={a.id}>
+                      <Avatar name={a.name} />
+                      <div className="att-info"><div className="an">{a.name}</div><div className="ad">{a.dept}・{a.pref}</div></div>
+                      <StatusPill status={a.status} />
+                    </div>
+                  );
+                })}
+                {attendees.length > 12 ? <div style={{ padding: "12px 20px", color: "var(--ink-mute)", fontSize: "var(--step--1)" }}>ほか {attendees.length - 12} 名</div> : null}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {showForm[0] ? <ParticipationModal t={t} onClose={function () { showForm[1](false); }} toast={props.toast} /> : null}
+    </div>
+  );
+}
+
+function ParticipationModal(props) {
+  var Store = window.Store;
+  var me = Store.getMe();
+  var t = props.t;
+  var name = React.useState(me.name || "");
+  var dept = React.useState(me.dept || "");
+  var status = React.useState("参加");
+  var pref = React.useState(t.format === "対面" ? "対面" : "オンライン");
+  var memo = React.useState("");
+  var err = React.useState("");
+
+  function submit() {
+    if (!name[0].trim()) { err[1]("お名前を入力してください"); return; }
+    Store.addAttendance({ trainingId: t.id, name: name[0].trim(), dept: dept[0], status: status[0], pref: pref[0], memo: memo[0].trim() });
+    Store.setMe({ name: name[0].trim(), dept: dept[0] });
+    props.toast("参加表明を受け付けました（" + status[0] + "）");
+    props.onClose();
+  }
+
+  return (
+    <div className="modal-scrim" onMouseDown={function (e) { if (e.target === e.currentTarget) props.onClose(); }}>
+      <div className="modal">
+        <div className="modal-head">
+          <div>
+            <span className="label-en">Join this session</span>
+            <h2>{t.title}</h2>
+          </div>
+          <button className="modal-x" onClick={props.onClose}><Icon name="x" /></button>
+        </div>
+        <div className="modal-body">
+          <div className="field-row">
+            <div className="field">
+              <label>氏名<span className="req">*</span></label>
+              <input type="text" value={name[0]} placeholder="山田 太郎" onChange={function (e) { name[1](e.target.value); err[1](""); }} />
+            </div>
+            <div className="field">
+              <label>所属BASE</label>
+              <select value={dept[0]} onChange={function (e) { dept[1](e.target.value); }}>
+                <option value="">選択してください</option>
+                {Store.BASES.map(function (d) { return <option key={d} value={d}>{d}</option>; })}
+              </select>
+            </div>
+          </div>
+
+          <div className="field">
+            <label>出欠</label>
+            <div className="choice">
+              {Store.STATUSES.map(function (s) {
+                return <button key={s} className={status[0] === s ? "on" : ""} onClick={function () { status[1](s); }}><span className="pdot"></span>{s}</button>;
+              })}
+            </div>
+          </div>
+
+          <div className="field">
+            <label>参加形式の希望<span className="hint">{t.format === "オンライン" ? "（本研修はオンライン開催）" : t.format === "対面" ? "（本研修は対面開催）" : ""}</span></label>
+            <div className="choice">
+              {["対面", "オンライン"].map(function (p) {
+                return <button key={p} className={pref[0] === p ? "on" : ""} onClick={function () { pref[1](p); }}><Icon name={p === "オンライン" ? "video" : "pin"} size={14} />{p}</button>;
+              })}
+            </div>
+          </div>
+
+          <div className="field">
+            <label>ひとことメモ<span className="hint">任意</span></label>
+            <textarea value={memo[0]} placeholder="例）途中参加します／質問があります 等" onChange={function (e) { memo[1](e.target.value); }}></textarea>
+          </div>
+          {err[0] ? <div style={{ color: "var(--accent-deep)", fontSize: "var(--step--1)" }}>{err[0]}</div> : null}
+        </div>
+        <div className="modal-foot">
+          <button className="btn btn-ghost btn-sm" onClick={props.onClose}>キャンセル</button>
+          <button className="btn btn-primary btn-sm" onClick={submit}><Icon name="check" size={15} />この内容で表明する</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+Object.assign(window, { DetailView: DetailView, ParticipationModal: ParticipationModal });
+
+/* ============================================================
+   StatsView.jsx — 参加集計ダッシュボード
+   ============================================================ */
+function StatsView(props) {
+  var Store = useStore();
+  var scope = React.useState("upcoming"); // upcoming | all
+
+  var trainings = Store.getTrainings().filter(function (t) { return scope[0] === "all" ? true : !isPast(t.date); });
+  var allAtt = Store.getAttendance();
+
+  // overall totals
+  var totals = { 参加: 0, 未定: 0, 不参加: 0 };
+  var deptCount = {};
+  var scopeIds = {};
+  trainings.forEach(function (t) { scopeIds[t.id] = true; });
+  allAtt.forEach(function (a) {
+    if (!scopeIds[a.trainingId]) return;
+    if (totals[a.status] != null) totals[a.status]++;
+    if (a.status === "参加") deptCount[a.dept || "未設定"] = (deptCount[a.dept || "未設定"] || 0) + 1;
+  });
+  var grand = totals.参加 + totals.未定 + totals.不参加;
+
+  // per training rows
+  var rows = trainings.map(function (t) { return { t: t, tally: Store.tally(t.id) }; })
+    .sort(function (a, b) { return b.tally.参加 - a.tally.参加; });
+
+  var deptRows = Object.keys(deptCount).map(function (d) { return { d: d, n: deptCount[d] }; }).sort(function (a, b) { return b.n - a.n; });
+  var deptMax = Math.max.apply(null, [1].concat(deptRows.map(function (r) { return r.n; })));
+
+  return (
+    <div className="page" data-screen-label="集計">
+      <div className="wrap">
+        <div className="page-head">
+          <span className="label-en">Aggregate</span>
+          <h1>参加集計<em>Insights</em></h1>
+          <p className="lead">研修ごとの参加人数と、出欠ステータス別の内訳をまとめて確認できます。</p>
+        </div>
+
+        <div className="toolbar">
+          <div className="seg">
+            {[["upcoming", "今後の研修"], ["all", "すべての研修"]].map(function (o) {
+              return <button key={o[0]} className={scope[0] === o[0] ? "active" : ""} onClick={function () { scope[1](o[0]); }}>{o[1]}</button>;
+            })}
+          </div>
+        </div>
+
+        <div className="stat-cards">
+          <div className="stat-card"><div className="sk">Programs</div><div className="sv">{trainings.length}</div><div className="su">対象の研修数</div></div>
+          <div className="stat-card"><div className="sk">Responses</div><div className="sv">{grand}</div><div className="su">参加表明の総数</div></div>
+          <div className="stat-card"><div className="sk">Attending</div><div className="sv acc">{totals.参加}</div><div className="su">「参加」の合計</div></div>
+          <div className="stat-card"><div className="sk">Undecided</div><div className="sv">{totals.未定}</div><div className="su">「未定」の合計</div></div>
+        </div>
+
+        <div className="divider">
+          <span className="dnum serif-num">01</span>
+          <h2>研修ごとの参加状況</h2>
+          <span className="dline"></span>
+          <span className="dcount">{rows.length}件</span>
+        </div>
+
+        <div className="legend" style={{ marginBottom: 12 }}>
+          <span><i className="sb-ok" style={{ background: "var(--accent)" }}></i>参加</span>
+          <span><i style={{ background: "var(--maybe)" }}></i>未定</span>
+          <span><i style={{ background: "var(--no)" }}></i>不参加</span>
+        </div>
+
+        {rows.length === 0 ? (
+          <div className="empty"><Icon name="chart" /><p>対象の研修がありません。</p></div>
+        ) : (
+          <div className="stat-table">
+            {rows.map(function (r) {
+              var ta = r.tally, tot = ta.total || 1;
+              return (
+                <div className="stat-trow" key={r.t.id} onClick={function () { props.go("training/" + r.t.id); }} style={{ cursor: "pointer" }}>
+                  <div className="stat-tinfo">
+                    <h3>{r.t.title}</h3>
+                    <div className="stm">
+                      <span>{fmtFull(r.t.date)}</span>
+                      <span>講師：{r.t.instructor.name}</span>
+                      <span>{r.t.format}</span>
+                    </div>
+                  </div>
+                  <div className="stat-tbar">
+                    <div className="stackbar" title={"参加 " + ta.参加 + " / 未定 " + ta.未定 + " / 不参加 " + ta.不参加}>
+                      <span className="sb-ok" style={{ width: (ta.参加 / tot * 100) + "%" }}></span>
+                      <span className="sb-maybe" style={{ width: (ta.未定 / tot * 100) + "%" }}></span>
+                      <span className="sb-no" style={{ width: (ta.不参加 / tot * 100) + "%" }}></span>
+                    </div>
+                    <div className="stat-tnum">{ta.参加}</div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        <div className="divider">
+          <span className="dnum serif-num">02</span>
+          <h2>BASE別の参加者数</h2>
+          <span className="dline"></span>
+          <span className="dcount">「参加」のみ集計</span>
+        </div>
+
+        {deptRows.length === 0 ? (
+          <div className="empty"><Icon name="users" /><p>まだ参加表明がありません。</p></div>
+        ) : (
+          <div className="dept-grid">
+            {deptRows.map(function (r) {
+              return (
+                <div className="dept-card" key={r.d}>
+                  <h4>{r.d}<b className="serif-num">{r.n}</b></h4>
+                  <div className="dept-bar"><span style={{ width: (r.n / deptMax * 100) + "%" }}></span></div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+Object.assign(window, { StatsView: StatsView });
+
+/* ============================================================
+   AdminView.jsx — 管理画面（合言葉ゲート + 研修の追加/編集/削除）
+   ============================================================ */
+function AdminView(props) {
+  var Store = useStore();
+  var authed = React.useState(sessionStorage.getItem("kenshu.admin") === "1");
+  var pass = React.useState("");
+  var err = React.useState("");
+  var editing = React.useState(null); // training obj or {} for new
+  var confirmDel = React.useState(null);
+
+  function tryAuth() {
+    if (pass[0] === Store.PASSCODE) { sessionStorage.setItem("kenshu.admin", "1"); authed[1](true); err[1](""); }
+    else { err[1]("合言葉が違います"); }
+  }
+
+  if (!authed[0]) {
+    return (
+      <div className="page" data-screen-label="管理ログイン">
+        <div className="wrap">
+          <div className="gate">
+            <Icon name="lock" className="glock" size={46} />
+            <h2>管理画面</h2>
+            <p>研修の追加・編集には合言葉が必要です。</p>
+            <input type="password" value={pass[0]} placeholder="••••"
+              onChange={function (e) { pass[1](e.target.value); err[1](""); }}
+              onKeyDown={function (e) { if (e.key === "Enter") tryAuth(); }} />
+            <div className="gerr">{err[0]}</div>
+            <button className="btn btn-dark" onClick={tryAuth}>ログイン</button>
+            <p style={{ marginTop: 16, marginBottom: 0, fontSize: "11px" }}>初期合言葉は <b>1234</b>（scripts/store.js で変更可）</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  var trainings = Store.getTrainings();
+  return (
+    <div className="page" data-screen-label="管理画面">
+      <div className="wrap">
+        <div className="page-head">
+          <span className="label-en">Admin</span>
+          <h1>研修の管理<em>Manage</em></h1>
+          <p className="lead">研修の追加・内容の編集・削除ができます。変更はすぐに一覧・カレンダー・集計へ反映されます。</p>
+        </div>
+
+        <div className="admin-bar">
+          <div style={{ color: "var(--ink-mute)", fontSize: "var(--step--1)" }}>登録済みの研修：<b className="serif-num" style={{ color: "var(--ink)", fontSize: 18 }}>{trainings.length}</b> 件</div>
+          <div style={{ display: "flex", gap: 10 }}>
+            <button className="btn btn-ghost btn-sm" onClick={function () { sessionStorage.removeItem("kenshu.admin"); authed[1](false); }}>ログアウト</button>
+            <button className="btn btn-primary btn-sm" onClick={function () { editing[1]({}); }}><Icon name="plus" size={15} />研修を追加</button>
+          </div>
+        </div>
+
+        <div className="admin-table">
+          {trainings.map(function (t) {
+            return (
+              <div className="admin-row" key={t.id}>
+                <div className="admin-date">
+                  <span className="d-day">{fmtDay(t.date)}</span>
+                  <span className="d-mon">{fmtMonEn(t.date)}</span>
+                </div>
+                <div className="admin-info">
+                  <h3>{t.title}</h3>
+                  <div className="am">
+                    <span>{t.category}</span>
+                    <span>講師：{t.instructor.name}</span>
+                    <span>{t.format}</span>
+                    <span>{Store.tally(t.id).参加}名参加予定</span>
+                  </div>
+                </div>
+                <div className="admin-acts">
+                  <button className="icon-btn" title="編集" onClick={function () { editing[1](t); }}><Icon name="edit" size={16} /></button>
+                  <button className="icon-btn del" title="削除" onClick={function () { confirmDel[1](t); }}><Icon name="trash" size={16} /></button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        <p style={{ marginTop: 22, color: "var(--ink-faint)", fontSize: "var(--step--1)" }}>
+          ※ データはFirestoreに保存されています。サンプルに戻すには
+          <button onClick={function () { if (confirm("すべての研修と参加表明をサンプルに戻します。よろしいですか？")) { Store.resetAll(); props.toast("サンプルデータに戻しました"); } }}
+            style={{ background: "none", border: "none", color: "var(--accent-deep)", textDecoration: "underline", cursor: "pointer", font: "inherit" }}>初期化</button>
+          できます。
+        </p>
+      </div>
+
+      {editing[0] ? <TrainingForm training={editing[0]} onClose={function () { editing[1](null); }} toast={props.toast} /> : null}
+
+
+      {confirmDel[0] ? (
+        <div className="modal-scrim" onMouseDown={function (e) { if (e.target === e.currentTarget) confirmDel[1](null); }}>
+          <div className="modal" style={{ maxWidth: 420 }}>
+            <div className="modal-head"><div><span className="label-en">Delete</span><h2>研修を削除</h2></div>
+              <button className="modal-x" onClick={function () { confirmDel[1](null); }}><Icon name="x" /></button></div>
+            <div className="modal-body"><p style={{ color: "var(--ink-soft)", lineHeight: 1.9 }}>「{confirmDel[0].title}」と、この研修への参加表明をすべて削除します。この操作は取り消せません。</p></div>
+            <div className="modal-foot">
+              <button className="btn btn-ghost btn-sm" onClick={function () { confirmDel[1](null); }}>キャンセル</button>
+              <button className="btn btn-danger btn-sm" onClick={function () { Store.deleteTraining(confirmDel[0].id); props.toast("研修を削除しました"); confirmDel[1](null); }}><Icon name="trash" size={15} />削除する</button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function TrainingForm(props) {
+  var Store = window.Store;
+  var t = props.training || {};
+  var isNew = !t.id;
+  var f = React.useState({
+    title: t.title || "", titleEn: t.titleEn || "", category: t.category || Store.CATEGORIES[0],
+    instructorName: (t.instructor || {}).name || "", instructorTitle: (t.instructor || {}).title || "",
+    format: t.format || "対面",
+    location: t.location || "", capacity: t.capacity || 20,
+    date: t.date || todayISO(), start: t.start || "10:00", end: t.end || "12:00",
+    desc: t.desc || ""
+  });
+  var err = React.useState("");
+  function set(k, v) { var n = Object.assign({}, f[0]); n[k] = v; f[1](n); }
+  function save() {
+    var v = f[0];
+    if (!v.title.trim()) { err[1]("研修名を入力してください"); return; }
+    Store.saveTraining({
+      id: t.id, title: v.title.trim(), titleEn: v.titleEn.trim(), category: v.category,
+      instructor: { name: v.instructorName.trim() || "未定", title: v.instructorTitle.trim() },
+      format: v.format, location: v.location.trim(),
+      capacity: parseInt(v.capacity, 10) || 0, date: v.date, start: v.start, end: v.end, desc: v.desc.trim()
+    });
+    props.toast(isNew ? "研修を追加しました" : "研修を更新しました");
+    props.onClose();
+  }
+
+  return (
+    <div className="modal-scrim" onMouseDown={function (e) { if (e.target === e.currentTarget) props.onClose(); }}>
+      <div className="modal wide">
+        <div className="modal-head">
+          <div><span className="label-en">{isNew ? "New program" : "Edit program"}</span><h2>{isNew ? "研修を追加" : "研修を編集"}</h2></div>
+          <button className="modal-x" onClick={props.onClose}><Icon name="x" /></button>
+        </div>
+        <div className="modal-body">
+          <div className="field">
+            <label>研修名<span className="req">*</span></label>
+            <input type="text" value={f[0].title} placeholder="例）新入社員ビジネスマナー研修" onChange={function (e) { set("title", e.target.value); err[1](""); }} />
+          </div>
+          <div className="field-row">
+            <div className="field">
+              <label>英語タイトル<span className="hint">任意</span></label>
+              <input type="text" value={f[0].titleEn} placeholder="Business Manners" onChange={function (e) { set("titleEn", e.target.value); }} />
+            </div>
+            <div className="field">
+              <label>カテゴリ</label>
+              <select value={f[0].category} onChange={function (e) { set("category", e.target.value); }}>
+                {Store.CATEGORIES.map(function (c) { return <option key={c} value={c}>{c}</option>; })}
+              </select>
+            </div>
+          </div>
+
+          <div className="field-row">
+            <div className="field">
+              <label>講師名</label>
+              <input type="text" value={f[0].instructorName} placeholder="田中 美咲" onChange={function (e) { set("instructorName", e.target.value); }} />
+            </div>
+            <div className="field">
+              <label>講師の所属・肩書<span className="hint">任意</span></label>
+              <input type="text" value={f[0].instructorTitle} placeholder="人事総務部 / 外部講師" onChange={function (e) { set("instructorTitle", e.target.value); }} />
+            </div>
+          </div>
+
+          <div className="field">
+            <label>開催形式</label>
+            <div className="choice">
+              {["対面", "オンライン"].map(function (p) {
+                return <button key={p} className={f[0].format === p ? "on" : ""} onClick={function () { set("format", p); }}><Icon name={p === "オンライン" ? "video" : "pin"} size={14} />{p}</button>;
+              })}
+            </div>
+          </div>
+
+          <div className="field-row">
+            <div className="field">
+              <label>場所 / 接続先</label>
+              <input type="text" value={f[0].location} placeholder="本社 3F 大会議室 / オンライン（Teams）" onChange={function (e) { set("location", e.target.value); }} />
+            </div>
+            <div className="field">
+              <label>定員<span className="hint">名</span></label>
+              <input type="number" min="1" value={f[0].capacity} onChange={function (e) { set("capacity", e.target.value); }} />
+            </div>
+          </div>
+
+          <div className="field-row-3">
+            <div className="field">
+              <label>開催日<span className="req">*</span></label>
+              <input type="date" value={f[0].date} onChange={function (e) { set("date", e.target.value); }} />
+            </div>
+            <div className="field">
+              <label>開始</label>
+              <input type="time" value={f[0].start} onChange={function (e) { set("start", e.target.value); }} />
+            </div>
+            <div className="field">
+              <label>終了</label>
+              <input type="time" value={f[0].end} onChange={function (e) { set("end", e.target.value); }} />
+            </div>
+          </div>
+
+          <div className="field">
+            <label>研修内容</label>
+            <textarea value={f[0].desc} placeholder="研修の概要・到達目標・受講にあたっての注意などを記入" style={{ minHeight: 110 }} onChange={function (e) { set("desc", e.target.value); }}></textarea>
+          </div>
+
+          {err[0] ? <div style={{ color: "var(--accent-deep)", fontSize: "var(--step--1)" }}>{err[0]}</div> : null}
+        </div>
+        <div className="modal-foot">
+          <button className="btn btn-ghost btn-sm" onClick={props.onClose}>キャンセル</button>
+          <button className="btn btn-primary btn-sm" onClick={save}><Icon name="check" size={15} />{isNew ? "追加する" : "保存する"}</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+Object.assign(window, { AdminView: AdminView, TrainingForm: TrainingForm });
+
+/* ============================================================
+   app.jsx — ルーティング / ナビゲーション / ルート
+   ============================================================ */
+function useHashRoute() {
+  function parse() {
+    var h = location.hash.replace(/^#\/?/, "");
+    var parts = h.split("/").filter(Boolean);
+    return { view: parts[0] || "list", id: parts[1] || null };
+  }
+  var route = React.useState(parse());
+  React.useEffect(function () {
+    function on() { route[1](parse()); window.scrollTo(0, 0); }
+    window.addEventListener("hashchange", on);
+    return function () { window.removeEventListener("hashchange", on); };
+  }, []);
+  return route[0];
+}
+
+var NAV = [
+  { key: "list", ja: "一覧", en: "List", icon: "list" },
+  { key: "calendar", ja: "カレンダー", en: "Calendar", icon: "calendar" },
+  { key: "stats", ja: "集計", en: "Insights", icon: "chart" },
+  { key: "admin", ja: "管理", en: "Admin", icon: "gear" }
+];
+
+function App() {
+  var Store = useStore();
+  var route = useHashRoute();
+  var toastMsg = React.useState(null);
+  var meOpen = React.useState(false);
+  var me = Store.getMe();
+
+  function go(path) { location.hash = "#/" + path; }
+  function toast(msg) { toastMsg[1](msg); }
+
+  var active = route.view;
+  var view;
+  if (active === "calendar") view = <CalendarView go={go} />;
+  else if (active === "stats") view = <StatsView go={go} />;
+  else if (active === "admin") view = <AdminView go={go} toast={toast} />;
+  else if (active === "training") view = <DetailView id={route.id} go={go} toast={toast} />;
+  else view = <ListView go={go} />;
+
+  var navActiveKey = active === "training" ? "list" : active;
+
+  return (
+    <div className="app">
+      <header className="topbar">
+        <div className="brand" onClick={function () { go("list"); }} style={{ cursor: "pointer" }}>
+          <span className="brand-mark">SLMC<span className="dot">.</span></span>
+          <span className="brand-sub hide-sm">日吉港北十日市場地域</span>
+        </div>
+
+        <nav className="nav-desktop">
+          {NAV.map(function (n) {
+            return (
+              <a key={n.key} className={"nav-link" + (navActiveKey === n.key ? " active" : "")} onClick={function () { go(n.key); }}>
+                <Icon name={n.icon} className="nico" />{n.ja}<span className="nlabel-en">{n.en}</span>
+              </a>
+            );
+          })}
+        </nav>
+
+        <div className="topbar-right">
+          <SyncIndicator />
+          <button className="me-chip" onClick={function () { meOpen[1](true); }}>
+            {me.name ? <span className="me-avatar">{me.name.charAt(0)}</span> : <Icon name="user" size={16} />}
+            {me.name ? <span>{me.name}</span> : <span className="me-empty">名前を設定</span>}
+          </button>
+        </div>
+      </header>
+
+      {view}
+
+      <div className="foot-note">
+        <span className="label-en">Internal Training Schedule</span>
+        社内研修スケジュール · データはFirestoreにリアルタイム同期 · 複数デバイスで同時共有
+      </div>
+
+      <nav className="nav-mobile">
+        <div className="nav-mobile-inner">
+          {NAV.map(function (n) {
+            return (
+              <button key={n.key} className={"mtab" + (navActiveKey === n.key ? " active" : "")} onClick={function () { go(n.key); }}>
+                <Icon name={n.icon} className="nico" /><span>{n.ja}</span>
+              </button>
+            );
+          })}
+        </div>
+      </nav>
+
+      {meOpen[0] ? <MeModal onClose={function () { meOpen[1](false); }} toast={toast} /> : null}
+      {toastMsg[0] ? <Toast msg={toastMsg[0]} onDone={function () { toastMsg[1](null); }} /> : null}
+    </div>
+  );
+}
+
+function MeModal(props) {
+  var Store = window.Store;
+  var me = Store.getMe();
+  var name = React.useState(me.name || "");
+  var dept = React.useState(me.dept || "");
+  function save() {
+    Store.setMe({ name: name[0].trim(), dept: dept[0] });
+    props.toast(name[0].trim() ? "プロフィールを保存しました" : "プロフィールをクリアしました");
+    props.onClose();
+  }
+  return (
+    <div className="modal-scrim" onMouseDown={function (e) { if (e.target === e.currentTarget) props.onClose(); }}>
+      <div className="modal" style={{ maxWidth: 440 }}>
+        <div className="modal-head">
+          <div><span className="label-en">Your profile</span><h2>あなたの情報</h2></div>
+          <button className="modal-x" onClick={props.onClose}><Icon name="x" /></button>
+        </div>
+        <div className="modal-body">
+          <p style={{ color: "var(--ink-mute)", fontSize: "var(--step--1)", marginBottom: 18, lineHeight: 1.8 }}>
+            登録しておくと、参加表明のときに氏名・部署が自動で入ります。
+          </p>
+          <div className="field">
+            <label>氏名</label>
+            <input type="text" value={name[0]} placeholder="山田 太郎" onChange={function (e) { name[1](e.target.value); }} />
+          </div>
+          <div className="field">
+            <label>所属BASE</label>
+            <select value={dept[0]} onChange={function (e) { dept[1](e.target.value); }}>
+              <option value="">選択してください</option>
+              {Store.BASES.map(function (d) { return <option key={d} value={d}>{d}</option>; })}
+            </select>
+          </div>
+        </div>
+        <div className="modal-foot">
+          <button className="btn btn-ghost btn-sm" onClick={props.onClose}>キャンセル</button>
+          <button className="btn btn-dark btn-sm" onClick={save}><Icon name="check" size={15} />保存</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+
+</script>
+</body>
+</html>
